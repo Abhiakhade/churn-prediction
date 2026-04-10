@@ -6,7 +6,9 @@ from pydantic import BaseModel
 import joblib
 import pandas as pd
 import os
+import urllib.request
 import shap
+from pathlib import Path
 
 # -----------------------------
 # App Init
@@ -26,11 +28,31 @@ app.add_middleware(
 templates = Jinja2Templates(directory="src/templates")
 
 # -----------------------------
+# Download model if not exists
+# -----------------------------
+MODEL_URL = "https://your-cloud-storage-link/model.pkl"  # Replace with your URL
+MODEL_PATH = Path("models/model.pkl")
+
+def download_model():
+    """Download model from cloud storage if not exists"""
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    
+    if not MODEL_PATH.exists():
+        print(f"Downloading model from {MODEL_URL}...")
+        try:
+            urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+            print("✅ Model downloaded successfully")
+        except Exception as e:
+            print(f"❌ Error downloading model: {e}")
+            raise
+
+# Download model before loading
+download_model()
+
+# -----------------------------
 # Load Model
 # -----------------------------
-MODEL_PATH = os.path.join("models", "model.pkl")
-
-if not os.path.exists(MODEL_PATH):
+if not MODEL_PATH.exists():
     raise FileNotFoundError(f"Model not found at {MODEL_PATH}")
 
 artifact = joblib.load(MODEL_PATH)
